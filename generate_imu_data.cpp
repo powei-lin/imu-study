@@ -9,7 +9,7 @@ int NUM_POINTS = 1000;
 double POINT_DIST = 10.0;
 constexpr int NUM_FRAMES = 1000;
 constexpr int CAM_FREQ = 20;
-constexpr int IMU_FREQ = 200;
+constexpr int IMU_FREQ = 500;
 
 static const int knot_time = 3;
 constexpr int64_t time_interval_ns = knot_time * 1e9;
