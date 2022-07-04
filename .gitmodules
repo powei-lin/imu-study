@@ -1,0 +1,3 @@
+[submodule "thirdparty/basalt-headers"]
+	path = thirdparty/basalt-headers
+	url = https://github.com/powei-lin/basalt-headers-fork.git
