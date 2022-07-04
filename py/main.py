@@ -75,7 +75,7 @@ def main():
             white_list.append(pose_name)
 
     ll = 3
-    fig = plt.figure(figsize=(18, 10))
+    fig = plt.figure(figsize=(16, 8))
     ax0 = fig.add_subplot(121, projection='3d')
     ax1 = fig.add_subplot(122, projection='3d')
 
@@ -102,7 +102,7 @@ def main():
     ax1.set_zlim((-ll, ll))
     # ax1.view_init(elev=0, azim=0, vertical_axis='y')
     ax1.set_title('imu integration pose')
-    # plt.savefig("pose.png")
+    # plt.savefig("image/pose.png")
     plt.show()
 
 
