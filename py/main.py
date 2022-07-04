@@ -74,8 +74,8 @@ def main():
             tm_imu_integral.add_transform(pose_name, "o", current_pose.copy())
             white_list.append(pose_name)
 
-    ll = 2
-    fig = plt.figure(figsize=(10, 5))
+    ll = 3
+    fig = plt.figure(figsize=(18, 10))
     ax0 = fig.add_subplot(121, projection='3d')
     ax1 = fig.add_subplot(122, projection='3d')
 
@@ -88,7 +88,9 @@ def main():
     ax0.set_xlim((-ll, ll))
     ax0.set_ylim((-ll, ll))
     ax0.set_zlim((-ll, ll))
-    ax0.view_init(elev=0, azim=0, vertical_axis='y')
+    # ax0.view_init(elev=0, azim=0, vertical_axis='y')
+    ax0.set_title('ground truth pose')
+
 
     tm_imu_integral.plot_frames_in("p0",
                                    s=ll / 10,
@@ -98,7 +100,9 @@ def main():
     ax1.set_xlim((-ll, ll))
     ax1.set_ylim((-ll, ll))
     ax1.set_zlim((-ll, ll))
-    ax1.view_init(elev=0, azim=0, vertical_axis='y')
+    # ax1.view_init(elev=0, azim=0, vertical_axis='y')
+    ax1.set_title('imu integration pose')
+    # plt.savefig("pose.png")
     plt.show()
 
 
