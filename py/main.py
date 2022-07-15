@@ -91,18 +91,10 @@ def main():
             prev_p_w_i = curr_p_w_i.copy()
 
             # preintegrate
-            preintegral_delta_t = (ts_ns - preintegral_timestamp_i) * 1e-9
-            preintegral_delta_v += preintegral_delta_r @ (a * delta_t)
-
-            # TODO why is this different from the paper
-            if preintegral_delta_t - delta_t > 0:
-                preintegral_delta_p *= (preintegral_delta_t) / (
-                    preintegral_delta_t - delta_t
-                )
-            preintegral_delta_p += 0.5 * (
-                (preintegral_delta_r @ a) * delta_t * preintegral_delta_t
+            preintegral_delta_p += (
+                preintegral_delta_v * delta_t + 0.5 * preintegral_delta_r @ a * delta_t2
             )
-
+            preintegral_delta_v += preintegral_delta_r @ (a * delta_t)
             preintegral_delta_r = (
                 preintegral_delta_r @ Rotation.from_rotvec(w * delta_t).as_matrix()
             )
