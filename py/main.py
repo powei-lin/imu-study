@@ -1,6 +1,5 @@
 import json
 import matplotlib.pyplot as plt
-import pandas as pd
 import numpy as np
 from scipy.spatial.transform import Rotation
 import matplotlib.pyplot as plt
@@ -11,7 +10,7 @@ import imu
 def main():
     poses = {}
     imu_freq = 500
-    with open("imu_data" + str(imu_freq) + ".json") as ifile:
+    with open("imu_data.json") as ifile:
         poses = json.load(ifile)
 
     # load json and draw gt pose
@@ -40,6 +39,9 @@ def main():
     preintegral_delta_r = np.eye(3)
     preintegral_delta_v = np.zeros((3,))
     preintegral_delta_p = np.zeros((3,))
+
+    prev_a = None
+    prev_w = None
 
     for i, p in poses.items():
         i = int(i)
@@ -70,35 +72,48 @@ def main():
             preintegral_ri = current_pose_preintegral[:3, :3].copy()
             preintegral_pi = current_pose_preintegral[:3, 3].copy()
         else:
-            delta_t = (ts_ns - prev_timestamp) * 1e-9
-            delta_t2 = delta_t * delta_t
+            delta_t_half = (ts_ns - prev_timestamp) / 2 * 1e-9
+            delta_t_half2 = delta_t_half * delta_t_half
 
             # integrate
-            curr_r_w_i = prev_r_w_i @ Rotation.from_rotvec(w * delta_t).as_matrix()
-            delta_v = (g + prev_r_w_i @ a) * delta_t
-            curr_v_w_i = prev_v_w_i + delta_v
-            curr_p_w_i = (
-                prev_p_w_i
-                + prev_v_w_i * delta_t
-                + 0.5 * g * delta_t2
-                + 0.5 * (prev_r_w_i @ a) * delta_t2
-            )
+            for (w0, a0) in [(prev_w, prev_a), (w, a)]:
+                curr_r_w_i = prev_r_w_i @ Rotation.from_rotvec(w0 * delta_t_half).as_matrix()
+                delta_v = (g + prev_r_w_i @ a0) * delta_t_half
+                curr_v_w_i = prev_v_w_i + delta_v
+                curr_p_w_i = (
+                    prev_p_w_i
+                    + prev_v_w_i * delta_t_half
+                    + 0.5 * g * delta_t_half2
+                    + 0.5 * (prev_r_w_i @ a) * delta_t_half2
+                )
+
+                prev_r_w_i = curr_r_w_i.copy()
+                prev_v_w_i = curr_v_w_i.copy()
+                prev_p_w_i = curr_p_w_i.copy()
             current_pose_integral[:3, :3] = curr_r_w_i
             current_pose_integral[:3, 3] = curr_p_w_i
 
-            prev_r_w_i = curr_r_w_i.copy()
-            prev_v_w_i = curr_v_w_i.copy()
-            prev_p_w_i = curr_p_w_i.copy()
-
             # preintegrate
+            # prev a, w
             preintegral_delta_p += (
-                preintegral_delta_v * delta_t + 0.5 * preintegral_delta_r @ a * delta_t2
+                preintegral_delta_v * delta_t_half + 0.5 * preintegral_delta_r @ prev_a * delta_t_half2
             )
-            preintegral_delta_v += preintegral_delta_r @ (a * delta_t)
+            preintegral_delta_v += preintegral_delta_r @ (prev_a * delta_t_half)
             preintegral_delta_r = (
-                preintegral_delta_r @ Rotation.from_rotvec(w * delta_t).as_matrix()
+                preintegral_delta_r @ Rotation.from_rotvec(prev_w * delta_t_half).as_matrix()
+            )
+            # current a, w
+            preintegral_delta_p += (
+                preintegral_delta_v * delta_t_half + 0.5 * preintegral_delta_r @ a * delta_t_half2
+            )
+            preintegral_delta_v += preintegral_delta_r @ (a * delta_t_half)
+            preintegral_delta_r = (
+                preintegral_delta_r @ Rotation.from_rotvec(w * delta_t_half).as_matrix()
             )
             # print("pre d p", preintegral_delta_p)
+        prev_a = a
+        prev_w = w
+
         prev_timestamp = ts_ns
 
         if i % skip_num == 0:
